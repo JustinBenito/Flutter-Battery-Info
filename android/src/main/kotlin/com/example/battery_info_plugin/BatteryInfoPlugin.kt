@@ -13,83 +13,93 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
 class BatteryInfoPlugin: FlutterPlugin, MethodCallHandler {
-  private lateinit var channel : MethodChannel
-  private lateinit var context: Context
+    private lateinit var channel: MethodChannel
+    private lateinit var context: Context
 
-  override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "battery_info_plugin")
-    channel.setMethodCallHandler(this)
-    context = flutterPluginBinding.applicationContext
-  }
-
-  override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-    when (call.method) {
-      "getBatteryInfo" -> {
-        val batteryInfo = getBatteryInfo()
-        Log.d("BatteryInfoPlugin", "Battery Info: $batteryInfo")
-        result.success(batteryInfo)
-      }
-      else -> {
-        result.notImplemented()
-      }
-    }
-  }
-
-  private fun getBatteryInfo(): Map<String, Any> {
-    val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
-      context.registerReceiver(null, ifilter)
+    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "battery_info_plugin")
+        channel.setMethodCallHandler(this)
+        context = flutterPluginBinding.applicationContext
     }
 
-    val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+        when (call.method) {
+            "getBatteryInfo" -> {
+                val batteryInfo = getBatteryInfo()
+                Log.d("BatteryInfoPlugin", "Battery Info: $batteryInfo")
+                result.success(batteryInfo)
+            }
+            else -> {
+                result.notImplemented()
+            }
+        }
+    }
 
-    val status: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-    val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING
-            || status == BatteryManager.BATTERY_STATUS_FULL
+    private fun getBatteryInfo(): Map<String, Any> {
+        val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
+            context.registerReceiver(null, ifilter)
+        }
 
-    val batteryPct: Float = batteryStatus?.let { intent ->
-      val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-      val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-      level * 100 / scale.toFloat()
-    } ?: -1f
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
-    // Get battery current
-    val batteryCurrent = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+        val status: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING
+                || status == BatteryManager.BATTERY_STATUS_FULL
 
-    return mapOf(
-      "batteryLevel" to batteryPct.toInt(),
-      "isCharging" to isCharging,
-      "chargingStatus" to when (status) {
-        BatteryManager.BATTERY_STATUS_CHARGING -> "Charging"
-        BatteryManager.BATTERY_STATUS_DISCHARGING -> "Discharging"
-        BatteryManager.BATTERY_STATUS_FULL -> "Full"
-        BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "Not Charging"
-        BatteryManager.BATTERY_STATUS_UNKNOWN -> "Unknown"
-        else -> "Unknown"
-      },
-      "batteryHealth" to when (batteryStatus?.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)) {
-        BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
-        BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
-        BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
-        BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-        BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "Unspecified Failure"
-        BatteryManager.BATTERY_HEALTH_COLD -> "Cold"
-        else -> "Unknown"
-      },
-      "pluggedStatus" to when (batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
-        BatteryManager.BATTERY_PLUGGED_AC -> "AC"
-        BatteryManager.BATTERY_PLUGGED_USB -> "USB"
-        BatteryManager.BATTERY_PLUGGED_WIRELESS -> "Wireless"
-        else -> "Not Plugged"
-      },
-      "batteryCapacity" to batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY),
-      "batteryVoltage" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: -1),
-      "batteryTemperature" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)?.div(10) ?: -1),
-      "batteryTechnology" to (batteryStatus?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "Unknown"),
-      "batteryCurrent" to batteryCurrent  // Added battery current
-    )
-  }
+        val batteryPct: Float = batteryStatus?.let { intent ->
+            val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            level * 100 / scale.toFloat()
+        } ?: -1f
 
-  override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-    channel.setMethodCallHandler(null)
-  }
+        val batteryCurrentNow = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+        val batteryCurrentAvg = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)
+        val batteryEnergyCounter = batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
+        val chargeCounter = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+        val cycleCount = batteryStatus?.getIntExtra("EXTRA_CYCLE_COUNT", -1) ?: -1
+        val isBatteryLow = batteryStatus?.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, false) ?: false
+
+        return mapOf(
+            "batteryLevel" to batteryPct.toInt(),
+            "isCharging" to isCharging,
+            "chargingStatus" to when (status) {
+                BatteryManager.BATTERY_STATUS_CHARGING -> "Charging"
+                BatteryManager.BATTERY_STATUS_DISCHARGING -> "Discharging"
+                BatteryManager.BATTERY_STATUS_FULL -> "Full"
+                BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "Not Charging"
+                BatteryManager.BATTERY_STATUS_UNKNOWN -> "Unknown"
+                else -> "Unknown"
+            },
+            "batteryHealth" to when (batteryStatus?.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)) {
+                BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
+                BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
+                BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
+                BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
+                BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "Unspecified Failure"
+                BatteryManager.BATTERY_HEALTH_COLD -> "Cold"
+                else -> "Unknown"
+            },
+            "pluggedStatus" to when (batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
+                BatteryManager.BATTERY_PLUGGED_AC -> "AC"
+                BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+                BatteryManager.BATTERY_PLUGGED_WIRELESS -> "Wireless"
+                BatteryManager.BATTERY_PLUGGED_DOCK -> "Dock"
+                else -> "Not Plugged"
+            },
+            "batteryCapacity" to batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY),
+            "batteryVoltage" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: -1),
+            "batteryTemperature" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)?.div(10) ?: -1),
+            "batteryTechnology" to (batteryStatus?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "Unknown"),
+            "batteryCurrentNow" to batteryCurrentNow,  
+            "batteryCurrentAvg" to batteryCurrentAvg,  
+            "batteryEnergyCounter" to batteryEnergyCounter, 
+            "chargeCounter" to chargeCounter,  
+            "cycleCount" to cycleCount,  
+            "isBatteryLow" to isBatteryLow  
+        )
+    }
+
+    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
+    }
 }

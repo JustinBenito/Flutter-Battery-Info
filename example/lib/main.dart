@@ -43,6 +43,23 @@ class _MyAppState extends State<MyApp> {
     return value.toString();
   }
 
+  double _calculateCarbonEmitted() {
+    final current = _batteryInfo['batteryCurrentNow'];
+    final voltage = _batteryInfo['batteryVoltage'];
+    
+    // Ensure current and voltage are valid numbers.
+    if (current == null || voltage == null) {
+      return 0.0;
+    }
+    
+    // Convert µA (microamps) to A (amps), and mV (millivolts) to V (volts).
+    final currentInAmps = current / 1000000;
+    final voltageInVolts = voltage / 1000;
+    
+    // Carbon emitted (grams) = currentInAmps * voltageInVolts * emission factor (0.43)
+    return currentInAmps * voltageInVolts * 0.43;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -51,24 +68,30 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Battery Info Plugin Example'),
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Battery Level: ${_getValueOrUnknown('batteryLevel')}%'),
-              Text('Is Charging: ${_getValueOrUnknown('isCharging')}'),
-              Text('Charging Status: ${_getValueOrUnknown('chargingStatus')}'),
-              Text('Battery Health: ${_getValueOrUnknown('batteryHealth')}'),
-              Text('Plugged Status: ${_getValueOrUnknown('pluggedStatus')}'),
-              Text('Battery Capacity: ${_getValueOrUnknown('batteryCapacity')}'),
-              Text('Battery Voltage: ${_getValueOrUnknown('batteryVoltage')} mV'),
-              Text('Battery Temperature: ${_getValueOrUnknown('batteryTemperature')}°C'),
-              Text('Battery Technology: ${_getValueOrUnknown('batteryTechnology')}'),
-              Text('Battery Current: ${_getValueOrUnknown('batteryCurrent')}'),
-              ElevatedButton(
-                onPressed: _getBatteryInfo,
-                child: const Text('Refresh Battery Info'),
-              ),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Battery Level: ${_getValueOrUnknown('batteryLevel')}%'),
+                Text('Is Charging: ${_getValueOrUnknown('isCharging')}'),
+                Text('Charging Status: ${_getValueOrUnknown('chargingStatus')}'),
+                Text('Battery Health: ${_getValueOrUnknown('batteryHealth')}'),
+                Text('Plugged Status: ${_getValueOrUnknown('pluggedStatus')}'),
+                Text('Battery Capacity: ${_getValueOrUnknown('batteryCapacity')}%'),
+                Text('Battery Voltage: ${_getValueOrUnknown('batteryVoltage')} mV'),
+                Text('Battery Temperature: ${_getValueOrUnknown('batteryTemperature')}°C'),
+                Text('Battery Technology: ${_getValueOrUnknown('batteryTechnology')}'),
+                Text('Battery Current: ${_getValueOrUnknown('batteryCurrentNow')} µA'),
+                Text('Battery Charge Counter: ${_getValueOrUnknown('chargeCounter')} µAh'),
+                Text('Battery Energy Counter: ${_getValueOrUnknown('batteryEnergyCounter')} nWh'),
+                Text('Average Battery Current: ${_getValueOrUnknown('batteryCurrentAvg')} µA'),
+                Text('Carbon Emitted: ${_calculateCarbonEmitted().toStringAsFixed(2)} grams'),                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _getBatteryInfo,
+                  child: const Text('Refresh Battery Info'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
