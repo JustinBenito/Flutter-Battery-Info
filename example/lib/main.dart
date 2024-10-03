@@ -85,7 +85,6 @@ class _MyAppState extends State<MyApp> {
                 Text('Battery Charge Counter: ${_getValueOrUnknown('chargeCounter')} µAh'),
                 Text('Battery Energy Counter: ${_getValueOrUnknown('batteryEnergyCounter')} nWh'),
                 Text('Average Battery Current: ${_getValueOrUnknown('batteryCurrentAvg')} µA'),
-                Text('Carbon Emitted: ${_calculateCarbonEmitted().toStringAsFixed(2)} grams'),                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _getBatteryInfo,
                   child: const Text('Refresh Battery Info'),
