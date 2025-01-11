@@ -29,7 +29,6 @@ import 'package:battery_info_plugin/battery_info_plugin.dart';
 void getBatteryInfo() async {
     var batteryLevel = await BatteryInfoPlugin.getBatteryLevel();
     var chargingStatus = await BatteryInfoPlugin.getChargingStatus();
-    // Add more usage examples as needed
 }
 ```
 
@@ -97,3 +96,4 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 For any questions or issues, please open an issue on the [GitHub repository](https://github.com/JustinBenito/Flutter-Battery-Info).
 
+It would be really great to star this repo, it would really make the world for me ⭐️
