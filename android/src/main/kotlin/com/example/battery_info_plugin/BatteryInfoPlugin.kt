@@ -88,7 +88,7 @@ class BatteryInfoPlugin: FlutterPlugin, MethodCallHandler {
             },
             "batteryCapacity" to batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY),
             "batteryVoltage" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: -1),
-            "batteryTemperature" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)?.div(10) ?: -1),
+            "batteryTemperature" to (batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)?.div(10.0) ?: -1),
             "batteryTechnology" to (batteryStatus?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "Unknown"),
             "batteryCurrentNow" to batteryCurrentNow,  
             "batteryCurrentAvg" to batteryCurrentAvg,  
